@@ -5,11 +5,12 @@ async function Dictate(){
     var tokenList=[] //The Voice has some fixed delay between utterances, trying to merge words
     var utterenceList=[]
     var delay=60000/document.getElementById("targetWPM").value
-    var timea=0
+    var timea=0//used for calibrating
     var timeb=0
     var timeStart=Date.now()
     var n=-1
-    var wordsPerToken=2
+
+    var wordsPerToken=2//it seperates the list into tokens and reads a whole token at once
 
     delay*=wordsPerToken
 
@@ -25,6 +26,7 @@ async function Dictate(){
     for(let i=0;i<tokenList.length;i++){
         utterenceList[i]=new SpeechSynthesisUtterance(tokenList[i])
     }
+    //quick and dirty, doubles read speed if faster than 60wpm
     if(delay<1000){
         utterenceList.forEach(element => {
             element.rate=2
