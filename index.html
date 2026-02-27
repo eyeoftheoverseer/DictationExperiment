@@ -4,8 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dictation</title>
+    <script src="script.js"></script>
 </head>
 <body>
-    <textarea></textarea>
+    <div class="">
+        <label for="textContent">Your Text Here:</label>
+        <textarea id="textContent" rows="5" cols="70">Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptatem vitae ex nihil deleniti, natus ipsa libero suscipit iure neque? Placeat molestias dignissimos doloribus voluptas ea pariatur omnis corporis consequatur neque!</textarea>
+        <br>
+        <label for="targetWPM">Target Wpm</label>
+        <input id="targetWPM" type="number" value="60">
+        <br>
+        <button id="startReading" onclick="Dictate()">Start Reading</button>
+    </div>
 </body>
 </html>
