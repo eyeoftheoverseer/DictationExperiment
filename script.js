@@ -11,6 +11,10 @@ async function Dictate(){
     var timeStart=Date.now()
     var n=-1
 
+        //TODO
+        // FOR TUNING: average speaking ms per word appears to be 500 ish
+        //      Use this to set utterance.rate when I'm more awake
+
     const endChars=['.','!','?',',','\n']
 
     // re-merge into segments
