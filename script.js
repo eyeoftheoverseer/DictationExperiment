@@ -1,58 +1,85 @@
 async function Dictate(){
-    var baseText=document.getElementById("textContent").value
+    var baseText=document.getElementById("textContent").value.replaceAll("\n",", ")
     //console.log(baseText)
-    var wordList=baseText.split(" ")
-    var tokenList=[] //The Voice has some fixed delay between utterances, trying to merge words
-    var utterenceList=[]
+    var wordList=baseText.split(" ") //input is split into individual words
+
+    // segments [0].length, [0].words [0].utterance, [0].delay
+    var segments=[]
     var delay=60000/document.getElementById("targetWPM").value
     var timea=0//used for calibrating
     var timeb=0
     var timeStart=Date.now()
     var n=-1
 
-    var wordsPerToken=2//it seperates the list into tokens and reads a whole token at once
+    const endChars=['.','!','?',',','\n']
 
-    delay*=wordsPerToken
-
+    // re-merge into segments
+    var newSegment=true
     for(let i=0;i<wordList.length;i++){
-        if(i%wordsPerToken==0){
+        // i is the current word from the original list, n is the current segment
+        if(newSegment){//n only increments if starting a new segment
+            newSegment=false
             n++
-            tokenList[n]=wordList[i]
-        }else{
-            tokenList[n]+=(" "+wordList[i])
+            segments[n]={}
+            segments[n].words=wordList[i]
+            segments[n].length=1
+        }else{//else it just adds the word and checks if it has endChars
+            segments[n].words+=(" "+wordList[i])
+            segments[n].length++
+
+            newSegment=endChars.some(c=>wordList[i].includes(c))
+            //TODO check if there is a more performant way to run above check
+                // ??-take input string as whole, for each:
+                    // check char, append to current segment, if endchar new segment.
+                        //check against double end char > "d'.\s'S" and the like
         }
     }
 
-    for(let i=0;i<tokenList.length;i++){
-        utterenceList[i]=new SpeechSynthesisUtterance(tokenList[i])
+    for(let n=0;n<segments.length;n++){// add utterances to each segment
+            segments[n].delay=delay*segments[n].length// calculate delay to start segment
+            segments[n].utterance=new SpeechSynthesisUtterance(segments[n].words)
     }
-    //quick and dirty, doubles read speed if faster than 60wpm
-    if(delay<1000){
-        utterenceList.forEach(element => {
-            element.rate=2
-        });
-    }
-    console.log("list "+tokenList)
-    console.log("delay"+delay)
-    for(let i=0;i<utterenceList.length;i++){
+    
+    //debug log for timing
+    console.log("list "+segments.map(s=>s.words))
+    console.log("target delay per word "+delay)
+    
+    timea=Date.now()
+    for(let i=0;i<segments.length;i++){
+        // the speach synthesiser runs on a seperate thread
+        //      so we can call it and immedeatly continue with logic
+        speechSynthesis.speak(segments[i].utterance)
         
-        speechSynthesis.speak(utterenceList[i])
-        timeb=Date.now()//tracks time for each loop
-        console.log(timeb-timea)
+        //wait at least as long as required for WPM
+        await sleep(segments[i].delay)
+        //Additionally wait until the current segment is done (tune value if needed)
+        while(speechSynthesis.speaking){
+            await sleep(100)
+        }
+
+        //Gets current time point
+        timeb=Date.now()
+        // this should (If my late night coding is accurate) show roughly any extra delays
+        console.log("\n"+segments[i].words+"\nSgmnt Delay: "+(timeb-timea)) // LOG time since last time point
+        console.log("per word:"+((timeb-timea)/segments[i].length))
         timea=timeb
-        await sleep(delay)
     }
+    //waits until the everything has been spoken
     while(speechSynthesis.speaking){
         await sleep(100)
     }
     timeb=Date.now()-timea //becomes time since loop ended
     timea=Date.now()-timeStart //becomes total time
-    console.log("spillover")
-    console.log(timeb)
+    // TODO fix this
+    //console.log("spillover")
+    //console.log(timeb)
     console.log("total time")
     console.log(timea)
+    
     console.log("target time")
-    console.log(delay*utterenceList.length)
+    console.log(delay*wordList.length)
+    console.log("real DelayPerWord")
+    console.log(timea/wordList.length)
 }
 
 function sleep(ms) {
