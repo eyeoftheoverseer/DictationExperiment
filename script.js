@@ -10,6 +10,7 @@ async function Dictate(){
     var timeb=0
     var timeStart=Date.now()
     var n=-1
+    var rate=500/delay
 
         //TODO
         // FOR TUNING: average speaking ms per word appears to be 500 ish
@@ -42,12 +43,14 @@ async function Dictate(){
     for(let n=0;n<segments.length;n++){// add utterances to each segment
             segments[n].delay=delay*segments[n].length// calculate delay to start segment
             segments[n].utterance=new SpeechSynthesisUtterance(segments[n].words)
+            segments[n].utterance.rate=rate
     }
     
     //debug log for timing
     console.log("list "+segments.map(s=>s.words))
     console.log("target delay per word "+delay)
-    
+    console.log("rate: "+rate)
+
     timea=Date.now()
     for(let i=0;i<segments.length;i++){
         // the speach synthesiser runs on a seperate thread
@@ -58,7 +61,7 @@ async function Dictate(){
         await sleep(segments[i].delay)
         //Additionally wait until the current segment is done (tune value if needed)
         while(speechSynthesis.speaking){
-            await sleep(100)
+            await sleep(10)
         }
 
         //Gets current time point
